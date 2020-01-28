@@ -7,8 +7,8 @@ LABEL summary="Laravel web server with Apache, php, node/npm, supervisor and cro
 
 # env
 # note: PHP version as in remi repo
-ARG PHP_VERSION="72"
-ARG NODE_VERSION="11"
+ARG PHP_VERSION="73"
+ARG NODE_VERSION="12"
 ARG ROOT_PASSWORD="Docker!"
 
 USER root
