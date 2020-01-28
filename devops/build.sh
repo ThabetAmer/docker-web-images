@@ -11,6 +11,10 @@
 
 composer install --no-interaction --no-progress  --prefer-dist --optimize-autoloader --ignore-platform-reqs --no-suggest --no-dev
 
+# npm
+npm install
+npm run prod
+
 #php artisan optimize
 
 #php artisan key:generate
