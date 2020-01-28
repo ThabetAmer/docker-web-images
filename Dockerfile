@@ -1,13 +1,13 @@
 FROM centos:centos7 as base
 
-LABEL name="lumen/php72"
+LABEL name="lumen"
 LABEL maintainer="Thabet Amer <thabet.amer@gmail.com>"
 LABEL version="3.0"
 LABEL summary="Lumen server with Apache, php, supervisor and cron"
 
 # env
 # note: PHP version as in remi repo
-ARG PHP_VERSION="72"
+ARG PHP_VERSION="73"
 ARG ROOT_PASSWORD="Docker!"
 
 USER root
