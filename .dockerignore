@@ -1,0 +1,20 @@
+# laravel temp files
+storage/app/**
+storage/framework/cache/**
+storage/framework/sessions/**
+storage/framework/testing/**
+storage/framework/views/**
+storage/logs/**
+storage/dbdata/**
+
+# app packages
+vendor
+node_modules
+
+# Git
+.git
+**/.gitignore
+
+.idea
+.dockerignore
+.env
