@@ -16,22 +16,22 @@ RUN echo "root:${ROOT_PASSWORD}" | chpasswd
 # install PHP ${PHP_VERSION} and dev tools
 RUN true \
     && yum -y install --setopt=tsflags=nodocs \
-	yum-utils \ 
-	https://dl.fedoraproject.org/pub/epel/epel-release-latest-7.noarch.rpm \
-	http://rpms.remirepo.net/enterprise/remi-release-7.rpm \
-	curl \
-	httpd \
-	zip \
-	unzip \
-	crontabs \
+        yum-utils \ 
+        https://dl.fedoraproject.org/pub/epel/epel-release-latest-7.noarch.rpm \
+        http://rpms.remirepo.net/enterprise/remi-release-7.rpm \
+        curl \
+        httpd \
+        zip \
+        unzip \
+        crontabs \
     && yum-config-manager --enable remi-php${PHP_VERSION} \
     && yum -y install --setopt=tsflags=nodocs \
-	php php-common php-mysql php-mcrypt php-gd php-curl php-json php-zip php-xml php-fileinfo php-bcmath \
-	libpng12-devel \
-	libpng-devel \
-	pngquant \
-	supervisor \
-	composer \
+        php php-common php-mysql php-mcrypt php-gd php-curl php-json php-zip php-xml php-fileinfo php-bcmath \
+        libpng12-devel \
+        libpng-devel \
+        pngquant \
+        supervisor \
+        composer \
     && yum -y clean all \
     && rm -rf /var/cache/yum
 
@@ -40,6 +40,7 @@ FROM base as build
 
 # env
 ARG TIMEZONE="UTC"
+RUN ln -sf /usr/share/zoneinfo/${TIMEZONE} /etc/localtime
 
 USER root
 
