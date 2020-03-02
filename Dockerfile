@@ -1,14 +1,13 @@
 FROM centos:centos7 as base
 
-LABEL name="laravel"
+LABEL name="codeigniter"
 LABEL maintainer="Thabet Amer <thabet.amer@gmail.com>"
 LABEL version="3.0"
-LABEL summary="Laravel web server with Apache, php, node/npm, supervisor and cron"
+LABEL summary="Codeigniter web server with Apache, php, supervisor and cron"
 
 # env
 # note: PHP version as in remi repo
-ARG PHP_VERSION="73"
-ARG NODE_VERSION="12"
+ARG PHP_VERSION="56"
 ARG ROOT_PASSWORD="Docker!"
 
 USER root
@@ -17,9 +16,9 @@ RUN echo "root:${ROOT_PASSWORD}" | chpasswd
 # install PHP ${PHP_VERSION} and dev tools
 RUN true \
     && yum -y install --setopt=tsflags=nodocs \
-        yum-utils \ 
-        https://dl.fedoraproject.org/pub/epel/epel-release-latest-7.noarch.rpm \
-        http://rpms.remirepo.net/enterprise/remi-release-7.rpm \
+        yum-utils \
+        https://archive.fedoraproject.org/pub/archive/epel/epel-release-latest-5.noarch.rpm \
+        http://rpms.remirepo.net/enterprise/remi-release-5.rpm \
         curl \
         httpd \
         zip \
@@ -28,14 +27,11 @@ RUN true \
     && yum-config-manager --enable remi-php${PHP_VERSION} \
     && yum -y install --setopt=tsflags=nodocs \
         php php-common php-mysql php-mcrypt php-gd php-curl php-json php-zip php-xml php-fileinfo php-bcmath \
+	php-mbstring php-xmlrpc php-pecl php-pspell php-soap \
         libpng12-devel \
         libpng-devel \
         pngquant \
         supervisor \
-        composer \
-    && curl -sL https://rpm.nodesource.com/setup_${NODE_VERSION}.x | bash - \
-    && yum -y install --setopt=tsflags=nodocs nodejs \
-    && npm install -g cross-env \
     && yum -y clean all \
     && rm -rf /var/cache/yum
 
