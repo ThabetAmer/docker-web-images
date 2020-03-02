@@ -17,8 +17,8 @@ RUN echo "root:${ROOT_PASSWORD}" | chpasswd
 RUN true \
     && yum -y install --setopt=tsflags=nodocs \
         yum-utils \
-        https://archive.fedoraproject.org/pub/archive/epel/epel-release-latest-5.noarch.rpm \
-        http://rpms.remirepo.net/enterprise/remi-release-5.rpm \
+        https://dl.fedoraproject.org/pub/epel/epel-release-latest-7.noarch.rpm \
+        http://rpms.remirepo.net/enterprise/remi-release-7.rpm \
         curl \
         httpd \
         zip \
@@ -26,12 +26,16 @@ RUN true \
         crontabs \
     && yum-config-manager --enable remi-php${PHP_VERSION} \
     && yum -y install --setopt=tsflags=nodocs \
-        php php-common php-mysql php-mcrypt php-gd php-curl php-json php-zip php-xml php-fileinfo php-bcmath \
-	php-mbstring php-xmlrpc php-pecl php-pspell php-soap \
+        php php-common php-mysqlnd php-mcrypt php-gd php-curl php-json php-zip php-xml php-fileinfo php-bcmath \
+        php-mbstring php-xmlrpc php-pspell php-soap \
         libpng12-devel \
         libpng-devel \
         pngquant \
-        supervisor \
+        supervisor
+
+# ffmpeg for Audio files handling
+RUN yum -y localinstall --nogpgcheck https://download1.rpmfusion.org/free/el/rpmfusion-free-release-7.noarch.rpm https://download1.rpmfusion.org/nonfree/el/rpmfusion-nonfree-release-7.noarch.rpm; \
+    yum -y install ffmpeg \
     && yum -y clean all \
     && rm -rf /var/cache/yum
 
