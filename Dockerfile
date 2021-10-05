@@ -1,75 +1,53 @@
-FROM centos:centos7 as base
+FROM ubuntu:20.04
+ENV DEBIAN_FRONTEND noninteractive
 
-LABEL name="laravel"
-LABEL maintainer="Thabet Amer <thabet.amer@gmail.com>"
-LABEL version="3.0"
-LABEL summary="Laravel web server with Apache, php, node/npm, supervisor and cron"
+# install packages and dependencies
+RUN apt-get update \
+  && dpkg-divert --local --rename --add /sbin/initctl \
+  && ln -sf /bin/true /sbin/initctl \
+  && echo "postfix postfix/mailname string drupal-mail" | debconf-set-selections \
+  && echo "postfix postfix/main_mailer_type string 'Local only'" | debconf-set-selections \
+  && apt-get -y install curl wget supervisor openssh-server locales \
+       apache2 pwgen vim-tiny mc iproute2 python-setuptools git \
+       unison netcat net-tools memcached nano libapache2-mod-php php php-cli php-common \
+       php-gd php-json php-mbstring php-xdebug php-mysql php-opcache php-curl \
+       php-readline php-xml php-memcached php-oauth php-bcmath \
+       postfix mailutils \
+  && apt-get clean \
+  && apt-get autoclean \
+  && apt-get -y autoremove \
+  && rm -rf /var/lib/apt/lists/*
 
-# env
-# note: PHP version as in remi repo
-ARG PHP_VERSION="73"
-ARG NODE_VERSION="12"
-ARG ROOT_PASSWORD="Docker!"
+# emails handling
+RUN echo site: root >> /etc/aliases \
+  && echo admin: root >> /etc/aliases \
+  && newaliases
 
-USER root
-RUN echo "root:${ROOT_PASSWORD}" | chpasswd
+# ssh
+RUN sed 's@session\s*required\s*pam_loginuid.so@session optional pam_loginuid.so@g' -i /etc/pam.d/sshd \
+  && echo 'PermitRootLogin yes' >> /etc/ssh/sshd_config
 
-# install PHP ${PHP_VERSION} and dev tools
-RUN true \
-    && yum -y install --setopt=tsflags=nodocs \
-        yum-utils \ 
-        https://dl.fedoraproject.org/pub/epel/epel-release-latest-7.noarch.rpm \
-        http://rpms.remirepo.net/enterprise/remi-release-7.rpm \
-        curl \
-        httpd \
-        zip \
-        unzip \
-        crontabs \
-    && yum-config-manager --enable remi-php${PHP_VERSION} \
-    && yum -y install --setopt=tsflags=nodocs \
-        php php-common php-mysql php-mcrypt php-gd php-curl php-json php-zip php-xml php-fileinfo php-bcmath \
-        libpng12-devel \
-        libpng-devel \
-        pngquant \
-        supervisor \
-        composer \
-    && curl -sL https://rpm.nodesource.com/setup_${NODE_VERSION}.x | bash - \
-    && yum -y install --setopt=tsflags=nodocs nodejs \
-    && npm install -g cross-env \
-    && yum -y clean all \
-    && rm -rf /var/cache/yum
+# install Composer and drupal console
+RUN curl -sS https://getcomposer.org/installer | php -- --install-dir=/usr/local/bin --filename=composer \
+  && curl https://drupalconsole.com/installer -L -o /usr/local/bin/drupal \
+  && chmod +x /usr/local/bin/drupal
 
+RUN rm /etc/apache2/sites-available/000-default.conf /etc/apache2/sites-enabled/*
 
-FROM base as build
+# copy configs
+COPY ./devops/supervisord.conf /etc/supervisor/conf.d/supervisord.conf
+COPY ./devops/000-default.conf /etc/apache2/sites-available/000-default.conf
+COPY ./devops/xdebug.ini /etc/php/*/mods-available/xdebug.ini
+COPY ./devops/start.sh /start.sh
 
-# env
-ARG TIMEZONE="UTC"
-RUN ln -sf /usr/share/zoneinfo/${TIMEZONE} /etc/localtime
+# finale
+RUN locale-gen en_US.UTF-8 \
+  && a2ensite 000-default \
+  && a2enmod rewrite vhost_alias \
+  && mkdir -p /var/lock/apache2 /var/run/apache2 /var/run/sshd /var/log/supervisor \
+  && chmod u+x /start.sh
 
-USER root
+WORKDIR /var/www/html
 
-# custom configs for php.ini, add yours here.
-RUN sed -i '\
-            s/;\?short_open_tag =.*/short_open_tag = On/; \
-            s/;\?expose_php =.*/expose_php = Off/; \
-            s/;\?post_max_size =.*/post_max_size = 101M/; \
-            s/;\?upload_max_filesize =.*/upload_max_filesize = 101M/; \
-            s/;\?max_execution_time =.*/max_execution_time = 120/; \
-            s/;\?memory_limit =.*/memory_limit = 512M/; \
-            s#;\?date.timezone =.*#date.timezone = '${TIMEZONE}'# \
-            ' /etc/php.ini \
-    && cp /etc/php.ini . \
-    && ln -sf /usr/share/zoneinfo/${TIMEZONE} /etc/localtime
-
-COPY . /var/www/html
-
-WORKDIR /var/www/html/
-
-COPY ./devops/apache.conf /etc/httpd/conf.d/host.conf
-COPY ./devops/crontab.conf /etc/crontab
-COPY ./devops/supervisord.conf /etc/
-
-RUN ./devops/build.sh
-
-EXPOSE 80
-CMD ["/usr/bin/supervisord", "-c", "/etc/supervisord.conf"]
+EXPOSE 22 80
+CMD ["/bin/bash", "/start.sh"]
